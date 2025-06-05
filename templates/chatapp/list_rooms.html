@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Available Chat Rooms</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center pt-10">
+    <div class="w-full max-w-lg bg-white shadow-xl rounded-lg p-8">
+        <h1 class="text-3xl font-bold text-center text-teal-700 mb-8">Available Chat Rooms</h1>
+        {% if chat_rooms %}
+            <ul class="space-y-3">
+                {% for room_name in chat_rooms %}
+                    <li class="border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                        <a href="{% url 'room' room_name=room_name %}" class="block p-4 text-lg text-teal-600 hover:text-teal-800 hover:bg-gray-50 rounded-lg">
+                            {{ room_name }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-center text-gray-600 text-lg">No chat rooms found yet.</p>
+            <p class="text-center text-gray-500 mt-2">Start a new chat to create a room!</p>
+        {% endif %}
+
+        <div class="mt-8 text-center">
+            <h2 class="text-xl font-semibold text-gray-700 mb-3">Or, enter a new room name:</h2>
+            <form id="join-room-form" class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <input type="text" id="new-room-name" placeholder="Enter room name"
+                       class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition duration-150" required>
+                <button type="submit"
+                        class="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-150 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50">
+                    Go to Room
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('join-room-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            const newRoomNameInput = document.getElementById('new-room-name');
+            const roomName = newRoomNameInput.value.trim();
+            if (roomName) {
+                // Construct the URL dynamically.
+                // This assumes your URL pattern for a room is something like '/chat/<room_name>/'
+                // and is named 'room' in your urls.py
+                window.location.href = `/chat/${encodeURIComponent(roomName)}/`;
+            } else {
+                alert("Please enter a room name.");
+            }
+        });
+    </script>
+</body>
+</html>

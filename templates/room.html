@@ -1,0 +1,282 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  margin: 0 auto;
+  max-width: 800px;
+  padding: 0 20px;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f0f4f8;
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+  margin: 20px 0;
+}
+
+#display {
+  overflow-y: auto;
+  padding: 10px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+/* Main message wrapper */
+.message {
+  display: flex;
+  margin: 12px 0;
+  font-family: "Segoe UI", sans-serif;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Incoming = left aligned */
+.message.incoming {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+/* Outgoing = right aligned */
+.message.outgoing {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+
+/* Avatar */
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Message content container */
+.message-content {
+  background-color: #f0f2f5;
+  padding: 10px 14px;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  max-width: 80%;
+}
+
+/* Message bubble */
+.message-bubble {
+  font-size: 15px;
+  color: #333;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Time display */
+.message-info {
+  margin-top: 4px;
+  text-align: right;
+}
+
+.message-time {
+  font-size: 12px;
+  color: #777;
+}
+
+/* Optional: Different bubble color for sender */
+.message.outgoing .message-content {
+  background-color: #daf8cb; /* Light green */
+}
+.message-content:hover {
+  background-color: #e6e6e6;
+}
+
+
+#post-form {
+  margin-top: 20px;
+  background-color: #ffffff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+input[type=text], select {
+  width: 100%;
+  padding: 12px 15px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+input[type=submit] {
+  width: 100%;
+  background-color: #4CAF50;
+  color: white;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+.message-head{
+  text-transform: capitalize;
+  font-weight: bold;
+  margin: 0;
+}
+.message.outgoing .message-head{
+  text-align: right;
+}
+
+.message.outgoing .message-bubble{
+  text-align: right;
+}
+/* .chat-container{
+  display: flex;
+  gap: 15px;
+  justify-content: space-between;
+} */
+
+</style>
+
+
+<script   src="https://code.jquery.com/jquery-3.1.1.min.js"   integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="   crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="chat-container">
+<div class="sidebar">
+  <h2>{{room}} - Chat</h2>
+
+</div>
+<div class="maindiv">
+<div id="display" class="message-container">
+
+</div>
+
+<div class="container">
+    <form id="post-form">
+        {% csrf_token %}
+        <input type="hidden" name="username" id="username" value="{{username}}"/>
+        <input type="hidden" name="room_id" id="room_id" value="{{room_details.id}}"/>
+        <input type="text" placeholder="Enter Message" name="message" id="message" width="100px" />
+        <input type="submit" value="Send">
+    </form>
+</div>
+</div>
+
+</div>
+<script>
+$(document).ready(function(){
+const urlParams = new URLSearchParams(window.location.search);
+const currentUser = urlParams.get('username'); 
+// console.log(currentUser)
+let lastMessageCount = 0;
+//date time formatter
+function formatTimestamp(isoString) {
+    const originalDate = new Date(isoString); // UTC
+
+    // Subtract 5 hours 30 minutes
+    const adjustedTime = new Date(originalDate.getTime() - (5.5 * 60 * 60 * 1000));
+
+    const year = adjustedTime.getFullYear();
+    const month = adjustedTime.toLocaleString('default', { month: 'short' });
+    const day = String(adjustedTime.getDate()).padStart(2, '0');
+
+    let hours = adjustedTime.getHours();
+    const minutes = String(adjustedTime.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+
+    return `${year}-${month}-${day}, ${hours}:${minutes} ${ampm}`;
+
+
+}
+
+setInterval(function(){
+    $.ajax({
+        type: 'GET',
+        url : "/getMessages/{{room}}/",
+        success: function(response){
+            // console.log(response);
+            
+            $("#display").empty();
+            
+            for (var key in response.messages) {
+                  var message = response.messages[key];
+                  var isOwnMessage = message.user === currentUser;
+
+                  var messageClass = isOwnMessage ? 'message outgoing' : 'message incoming';
+                  var timeClass = isOwnMessage ? 'time-right' : 'time-left';
+                  var avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(message.user)}&background=random`;
+
+                  var formattedTime = formatTimestamp(message.date);
+                      var temp = `
+                              <div class='${messageClass}'>
+                                <img src="${avatarUrl}" alt="${message.user}" class="message-avatar">
+                                <div class="message-content">
+                                  <p class="message-head">${message.user}</p>
+                                  <p class="message-bubble">${message.value}</p>
+                                  <div class="message-info">
+                                      <span class="message-time">${formattedTime}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            `;
+
+                  $("#display").append(temp);
+              }
+              // Play sound if new message arrived
+              if (response.messages.length > lastMessageCount) {
+                  document.getElementById('msg-sound').play();
+              }
+
+              lastMessageCount = response.messages.length;
+
+              // Auto scroll
+              $('#display').scrollTop($('#display')[0].scrollHeight);
+
+        },
+        error: function(response){
+            alert('An error occured')
+        }
+    });
+},1000);
+})
+</script>
+
+
+
+<!-- Audio for new message ping -->
+<!-- <audio id="msg-sound" src="D:\Besant_python\django-project\chat-room\djangochat\templates/ping.mp3" preload="auto"></audio> -->
+<audio id="msg-sound" src="{% static 'sounds/ping.mp3' %}" preload="auto"></audio>
+
+</body>
+
+<script type="text/javascript">
+  $(document).on('submit','#post-form',function(e){
+    e.preventDefault();
+
+    $.ajax({
+      type:'POST',
+      url:'/send',
+      data:{
+          username:$('#username').val(),
+          room_id:$('#room_id').val(),
+          message:$('#message').val(),
+        csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(),
+      },
+      success: function(data){
+        //  alert(data)
+      }
+    });
+    document.getElementById('message').value = ''
+  });
+</script>
+
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+:root {
+        --primary: #4f46e5;
+    --primary-light: #6366f1;
+    --primary-dark: #4338ca;
+    --secondary: #0ea5e9;
+    --accent: #f59e0b;
+    --dark: #111827;
+    --light: #f9fafb;
+    --gray: #9ca3af;
+    --gray-light: #e5e7eb;
+    --gray-dark: #4b5563;
+    --danger: #ef4444;
+    --success: #10b981;
+    --border-radius: 12px;
+    --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --transition: all 0.3s ease;
+
+}
+.chat-container{
+    display: flex
+;
+    height: 100%;
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    overflow: hidden;
+
+}
+.sidebar {
+    width: 250px;
+    background-color: var(--light);
+    border-right: 1px solid var(--gray-light);
+    display: flex
+;
+    flex-direction: column;
+    transition: var(--transition);
+    position: relative;
+    z-index: 10;
+}
+.chat-area {
+    flex: 1;
+    display: flex
+;
+    flex-direction: column;
+    background-color: #ffffff;
+}
+.sidebar-header {
+    padding: 20px;
+    display: flex
+;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gray-light);
+    background-color: white;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+.sidebar-header h2 {
+    font-size: 1.2rem;
+    color: var(--dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.participants-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 10px;
+}
+.participant {
+    display: flex
+;
+    align-items: center;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+.participant-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 12px;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.participant-info {
+    flex: 1;
+    overflow: hidden;
+}
+.participant-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--dark);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--gray-light);
+    display: flex
+;
+    align-items: center;
+    justify-content: space-between;
+    background-color: white;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+.chat-title {
+    display: flex
+;
+    align-items: center;
+}
+.messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex
+;
+    flex-direction: column;
+    gap: 15px;
+}
+.message {
+    display: flex
+;
+    gap: 12px;
+    max-width: 80%;
+    animation: fadeIn 0.3s ease;
+}
+.message-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.message-content {
+    display: flex
+;
+    flex-direction: column;
+}
+.message.incoming .message-bubble {
+    background-color: var(--gray-light);
+    color: var(--dark);
+    border-bottom-left-radius: 5px;
+}
+.message-bubble {
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 0.95rem;
+    position: relative;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+.message-info {
+    display: flex
+;
+    align-items: center;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: var(--gray-dark);
+}
+.message-time {
+    margin-right: 8px;
+}
+.message.outgoing {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+.message.outgoing .message-bubble {
+    background-color: var(--primary);
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+.message.outgoing .message-info {
+    justify-content: flex-end;
+}
+</style>
+</head>
+<body>
+
+<!-- <h2 class="heading-chat">{{room}} - Chat</h2>
+<div class="wrapper">
+  <div class="sidebar"></div>
+    <div id="display">
+        <div class='container right'>
+            <img src="${avatarUrl}" alt="${message.user}">
+            <div class="message-content">
+                <b class="username">tom1</b>
+                <p class="value">Hi there! I noticed you're working on some interesting AI-powered design tools. I'm currently exploring similar concepts at Figma. Would love to exchange ideas!</p>
+                <span class="time-right">2025-May-28, 3:25 PM</span>
+            </div>
+        </div>
+        <div class='container right'>
+            <img src="${avatarUrl}" alt="${message.user}">
+            <div class="message-content">
+                <b class="username">tom1</b>
+                <p class="value"> Would love to exchange ideas!</p>
+                <span class="time-right">2025-May-28, 3:25 PM</span>
+            </div>
+        </div>
+        <div class='container left'>
+            <img src="${avatarUrl}" alt="${message.user}">
+            <div class="message-content">
+                <b class="username">bobby</b>
+                <p class="value">Hi there! I noticed you're working on some interesting AI-powered design tools. I'm currently exploring similar concepts at Figma. Would love to exchange ideas!</p>
+                <span class="time-left">2025-May-28, 3:25 PM</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container">
+    <form id="post-form">
+        {% csrf_token %}
+        <input type="hidden" name="username" id="username" value="{{username}}"/>
+        <input type="hidden" name="room_id" id="room_id" value="{{room_details.id}}"/>
+        <input type="text" placeholder="Enter Message" name="message" id="message" width="100px" />
+        <input type="submit" value="Send">
+    </form>
+</div> -->
+
+
+
+<div class="chat-container">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>NetworkNexus</h2>
+        </div>
+        <div class="participants-list">
+                
+                <div class="participant" data-id="user2">
+                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Marcus Johnson" class="participant-avatar">
+                    <div class="participant-info">
+                        <div class="participant-name">Marcus Johnson</div>
+                    </div>
+                    
+                </div>
+                
+                               
+                <div class="participant" data-id="user6">
+                    <img src="https://randomuser.me/api/portraits/men/40.jpg" alt="Jordan Taylor" class="participant-avatar">
+                    <div class="participant-info">
+                        <div class="participant-name">Jordan Taylor</div>
+                    </div>
+                </div>
+            </div>
+    </div>
+    <div class="chatarea">
+        <div class="chat-header">
+                <div class="chat-title">
+                    <h2>Sarah Chen</h2>
+                    <div class="chat-subtitle">UX Designer @ Figma</div>
+                </div>
+        </div>
+        <div class="messages-container">
+                
+                
+                <div class="message incoming">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah Chen" class="message-avatar">
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            Hi there! I noticed you're working on some interesting AI-powered design tools. I'm currently exploring similar concepts at Figma. Would love to exchange ideas!
+                        </div>
+                        <div class="message-info">
+                            <span class="message-time">2:14 PM</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="container">
+    <form id="post-form">
+        {% csrf_token %}
+        <input type="hidden" name="username" id="username" value="{{username}}"/>
+        <input type="hidden" name="room_id" id="room_id" value="{{room_details.id}}"/>
+        <input type="text" placeholder="Enter Message" name="message" id="message" width="100px" />
+        <input type="submit" value="Send">
+    </form>
+</div>
+                <div class="message outgoing">
+                    <img src="https://randomuser.me/api/portraits/men/86.jpg" alt="You" class="message-avatar">
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            Hey Sarah! Absolutely, I'd love to chat about that. We've been experimenting with ML models to automate some tedious design tasks. What specific area are you focusing on at Figma?
+                        </div>
+                        <div class="message-info">
+                            <span class="message-time">2:16 PM</span>
+                            <span class="message-status">
+                                <i class="fas fa-check-double"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="message incoming">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah Chen" class="message-avatar">
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            I'm part of the team exploring AI-assisted design systems - particularly how we can use ML to help maintain consistency across large design systems while still allowing for creative exploration. The challenge is balancing automation with designer control.
+                        </div>
+                        <div class="message-info">
+                            <span class="message-time">2:19 PM</span>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+                
+                
+                
+            </div>
+    </div>
+</div>
+</body>
+
+
+</html>

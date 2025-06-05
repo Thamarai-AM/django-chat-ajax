@@ -1,0 +1,979 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetworkNexus Chat</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #6366f1;
+            --primary-dark: #4338ca;
+            --secondary: #0ea5e9;
+            --accent: #f59e0b;
+            --dark: #111827;
+            --light: #f9fafb;
+            --gray: #9ca3af;
+            --gray-light: #e5e7eb;
+            --gray-dark: #4b5563;
+            --danger: #ef4444;
+            --success: #10b981;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            height: 700px;
+            width: 700px;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--light);
+            border-right: 1px solid var(--gray-light);
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            position: relative;
+            z-index: 10;
+        }
+
+        .sidebar-collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--gray-light);
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            color: var(--dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .toggle-sidebar {
+            background: none;
+            border: none;
+            color: var(--gray-dark);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+
+        .toggle-sidebar:hover {
+            color: var(--primary);
+        }
+
+        .search-box {
+            padding: 15px;
+            position: sticky;
+            top: 64px;
+            background-color: white;
+            z-index: 4;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--gray-light);
+            outline: none;
+            font-size: 0.9rem;
+            background-color: var(--gray-light);
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .participants-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: 10px;
+        }
+
+        .participant {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .participant:hover {
+            background-color: var(--gray-light);
+        }
+
+        .participant.active {
+            background-color: rgba(79, 70, 229, 0.1);
+        }
+
+        .participant-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 12px;
+            object-fit: cover;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .participant-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .participant-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--dark);
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .participant-role {
+            font-size: 0.8rem;
+            color: var(--gray-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .participant-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+
+        .status-online {
+            background-color: var(--success);
+        }
+
+        .status-offline {
+            background-color: var(--gray);
+        }
+
+        .status-busy {
+            background-color: var(--danger);
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 3;
+        }
+
+        .chat-title {
+            display: flex;
+            align-items: center;
+        }
+
+        .chat-title h2 {
+            font-size: 1.1rem;
+            color: var(--dark);
+            margin-right: 10px;
+        }
+
+        .chat-subtitle {
+            font-size: 0.85rem;
+            color: var(--gray-dark);
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--gray-dark);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 5px;
+            border-radius: 50%;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .action-btn:hover {
+            background-color: var(--gray-light);
+            color: var(--primary);
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message.outgoing {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .message-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            position: relative;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+
+        .message.incoming .message-bubble {
+            background-color: var(--gray-light);
+            color: var(--dark);
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.outgoing .message-bubble {
+            background-color: var(--primary);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message-info {
+            display: flex;
+            align-items: center;
+            margin-top: 4px;
+            font-size: 0.75rem;
+            color: var(--gray-dark);
+        }
+
+        .message.outgoing .message-info {
+            justify-content: flex-end;
+        }
+
+        .message-time {
+            margin-right: 8px;
+        }
+
+        .message-status {
+            display: flex;
+            align-items: center;
+        }
+
+        .network-prompt {
+            background-color: rgba(15, 118, 110, 0.08);
+            border-radius: var(--border-radius);
+            border-left: 3px solid var(--success);
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            color: var(--dark);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .network-prompt-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--success);
+        }
+
+        .network-prompt-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .network-prompt-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+
+        .network-prompt-btn.primary {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .network-prompt-btn.secondary {
+            background-color: transparent;
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .network-prompt-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-preview {
+            position: absolute;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 300px;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateY(10px);
+            overflow: hidden;
+        }
+
+        .profile-preview.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            height: 80px;
+            position: relative;
+        }
+
+        .profile-avatar-wrapper {
+            position: absolute;
+            bottom: -30px;
+            left: 20px;
+        }
+
+        .profile-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            object-fit: cover;
+        }
+
+        .profile-body {
+            padding: 40px 20px 20px;
+        }
+
+        .profile-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .profile-role {
+            font-size: 0.85rem;
+            color: var(--gray-dark);
+            margin-bottom: 15px;
+        }
+
+        .profile-bio {
+            font-size: 0.9rem;
+            color: var(--gray-dark);
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--gray-dark);
+        }
+
+        .profile-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .profile-tag {
+            background-color: var(--gray-light);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            color: var(--gray-dark);
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .profile-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            text-align: center;
+        }
+
+        .profile-btn.primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .profile-btn.secondary {
+            background-color: var(--gray-light);
+            color: var(--gray-dark);
+        }
+
+        .profile-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-input-container {
+            padding: 15px;
+            border-top: 1px solid var(--gray-light);
+            background-color: white;
+            position: sticky;
+            bottom: 0;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            align-items: center;
+            background-color: var(--gray-light);
+            border-radius: 24px;
+            padding: 5px;
+            transition: var(--transition);
+        }
+
+        .chat-input-wrapper:focus-within {
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+
+        .chat-input-tools {
+            display: flex;
+            padding: 0 5px;
+        }
+
+        .tool-btn {
+            background: none;
+            border: none;
+            color: var(--gray-dark);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 8px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .tool-btn:hover {
+            color: var(--primary);
+            background-color: rgba(79, 70, 229, 0.1);
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 10px;
+            background-color: transparent;
+            font-size: 0.95rem;
+            resize: none;
+            max-height: 120px;
+            min-height: 24px;
+        }
+
+        .send-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .send-btn:hover {
+            background-color: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            background-color: var(--gray);
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+            font-size: 0.85rem;
+            color: var(--gray-dark);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .typing-dots {
+            display: flex;
+            margin-left: 5px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--gray-dark);
+            margin-right: 3px;
+            animation: typingDot 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+            margin-right: 0;
+        }
+
+        /* Notification badge */
+        .notification-badge {
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+        }
+
+        /* System message */
+        .system-message {
+            text-align: center;
+            padding: 8px 16px;
+            background-color: rgba(79, 70, 229, 0.1);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--primary);
+            margin: 10px 0;
+            max-width: 80%;
+            align-self: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes typingDot {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-4px);
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 650px) {
+            .sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                transform: translateX(-100%);
+                box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
+            }
+            
+            .sidebar.mobile-visible {
+                transform: translateX(0);
+            }
+            
+            .sidebar-collapsed {
+                transform: translateX(-100%);
+            }
+            
+            .messages-container {
+                padding: 15px 10px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            .mobile-menu-btn {
+                display: block !important;
+            }
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--gray-dark);
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--gray);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: var(--gray-dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>NetworkNexus</h2>
+                <button class="toggle-sidebar">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Search participants...">
+            </div>
+            <div class="participants-list">
+                <div class="participant active" data-id="user1">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah Chen" class="participant-avatar">
+                    <div class="participant-info">
+                        <div class="participant-name">Sarah Chen</div>
+                        <div class="participant-role">UX Designer @ Figma</div>
+                    </div>
+                    <div class="participant-status status-online"></div>
+                </div>
+                <div class="participant" data-id="user2">
+                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Marcus Johnson" class="participant-avatar">
+                    <div class="participant-info">
+                        <div class="participant-name">Marcus Johnson</div>
+                        <div class="participant-role">Product Manager @ Slack</div>
+                    </div>
+                    <div class="participant-status status-online"></div>
+                    <div class="notification-badge">3</div>
+                </div>
+                <div class="participant" data-id="user3">
+                    <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Priya Patel" class="participant-avatar">
+                    <div class="participant-info">
+                        <div class="participant-name">Priya Patel</div>
+                        <div class="participant-role">Frontend Dev @ Shopify</div>
+                    </div>
+                    <div class="participant-status status-busy"></div>
+                </div>
+                <div class="participant" data-id="user4">
+                    <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="David Kim" class="participant-avatar">
+                    <div class="participant-info">
+                        <div class="participant-name">David Kim</div>
+                        <div class="participant-role">VC @ Sequoia Capital</div>
+                    </div>
+                    <div class="participant-status status-offline"></div>
+                </div>
+                <div class="participant" data-id="user5">
+                    <img src="https://randomuser.me/api/portraits/women/90.jpg" alt="Elena Rodriguez" class="participant-avatar">
+                    <div class="participant-info">
+                        <div class="participant-name">Elena Rodriguez</div>
+                        <div class="participant-role">CTO @ Webflow</div>
+                    </div>
+                    <div class="participant-status status-online"></div>
+                </div>
+                <div class="participant" data-id="user6">
+                    <img src="https://randomuser.me/api/portraits/men/40.jpg" alt="Jordan Taylor" class="participant-avatar">
+                    <div class="participant-info">
+                        <div class="participant-name">Jordan Taylor</div>
+                        <div class="participant-role">Design Lead @ Airbnb</div>
+                    </div>
+                    <div class="participant-status status-online"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-area">
+            <div class="chat-header">
+                <button class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="chat-title">
+                    <h2>Sarah Chen</h2>
+                    <div class="chat-subtitle">UX Designer @ Figma</div>
+                </div>
+                <div class="chat-actions">
+                    <button class="action-btn" id="video-call-btn">
+                        <i class="fas fa-video"></i>
+                    </button>
+                    <button class="action-btn" id="phone-call-btn">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button class="action-btn" id="info-btn">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="messages-container">
+                <div class="system-message">
+                    Chat started on June 15, 2023 • Virtual Design Summit
+                </div>
+                
+                <div class="message incoming">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah Chen" class="message-avatar">
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            Hi there! I noticed you're working on some interesting AI-powered design tools. I'm currently exploring similar concepts at Figma. Would love to exchange ideas!
+                        </div>
+                        <div class="message-info">
+                            <span class="message-time">2:14 PM</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="message outgoing">
+                    <img src="https://randomuser.me/api/portraits/men/86.jpg" alt="You" class="message-avatar">
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            Hey Sarah! Absolutely, I'd love to chat about that. We've been experimenting with ML models to automate some tedious design tasks. What specific area are you focusing on at Figma?
+                        </div>
+                        <div class="message-info">
+                            <span class="message-time">2:16 PM</span>
+                            <span class="message-status">
+                                <i class="fas fa-check-double"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="message incoming">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah Chen" class="message-avatar">
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            I'm part of the team exploring AI-assisted design systems - particularly how we can use ML to help maintain consistency across large design systems while still allowing for creative exploration. The challenge is balancing automation with designer control.
+                        </div>
+                        <div class="message-info">
+                            <span class="message-time">2:19 PM</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="network-prompt">
+                    <div class="network-prompt-title">
+                        <i class="fas fa-lightbulb"></i> Networking Opportunity
+                    </div>
+                    <p>You and Sarah both share interests in AI-powered design tools. This could be a great opportunity to schedule a follow-up conversation on collaborative innovation.</p>
+                    <div class="network-prompt-actions">
+                        <button class="network-prompt-btn primary">Schedule Meeting</button>
+                        <button class="network-prompt-btn secondary">Share Contact</button>
+                    </div>
+                </div>
+                
+                <div class="message outgoing">
+                    <img src="https://randomuser.me/api/portraits/men/86.jpg" alt="You" class="message-avatar">
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            That's fascinating! We're facing the exact same challenge. I'd love to dive deeper into how you're approaching this balance. Would you be open to scheduling a video call sometime next week to share some of our findings and possibly explore collaboration opportunities?
+                        </div>
+                        <div class="message-info">
+                            <span class="message-time">2:23 PM</span>
+                            <span class="message-status">
+                                <i class="fas fa-check-double"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="typing-indicator">
+                    <span>Sarah is typing</span>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <div class="chat-input-tools">
+                        <button class="tool-btn" id="emoji-btn">
+                            <i class="far fa-smile"></i>
+                        </button>
+                        <button class="tool-btn" id="attach-btn">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                    </div>
+                    <textarea class="chat-input" placeholder="Type your message..."></textarea>
+                    <button class="send-btn" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="profile-preview" id="profile-preview">
+        <div class="profile-header">
+            <div class="profile-avatar-wrapper">
+                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Sarah Chen" class="profile-avatar">
+            </div>
+        </div>
+        <div class="profile-body">
+            <div class="profile-name">Sarah Chen</div>
+            <div class="profile-role">UX Designer @ Figma</div>
+            <div class="profile-bio">
+                Leading design systems initiatives at Figma. Previously at Google and Apple. Passionate about the intersection of AI and design. Based in San Francisco.
+            </div>
+            <div class="profile-stats">
+                <div class="stat">
+                    <div class="stat-value">24</div>
+                    <div class="stat-label">Connections</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Sessions</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Shared Groups</div>
+                </div>
+            </div>
+            <div class="profile-tags">
+                <div class="profile-tag">UX Design</div>
+                <div class="profile-tag">AI</div>
+                <div class="profile-tag">Design Systems</div>
+                <div class="profile-tag">Product</div>
+                <div class="profile-tag">Figma</div>
+            </div>
+            <div class="profile-actions">
+                <button class="profile-btn primary">Connect</button>
+                <button class="profile-btn secondary">View Profile</button>
+            </div>
+        </div>
+    </div>
+
+    </body>
+    </html>
+    
+
+ 
